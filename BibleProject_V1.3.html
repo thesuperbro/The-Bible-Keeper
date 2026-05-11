@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="The Bible Keeper - Daily Verse & Multi-Version Comparison">
+  <title>The Bible Keeper</title>
+  <meta name="theme-color" content="#3498db">
+
+  <style>
+    :root {
+      --bg: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      --card: #fafafa;
+      --text: #333;
+      --verse: #34495e;
+      --accent: #3498db;
+    }
+    body.dark {
+      --bg: linear-gradient(135deg, #2c3e50, #1a252f);
+      --card: #2c3e50;
+      --text: #ecf0f1;
+      --verse: #bdc3c7;
+      --accent: #5dade2;
+    }
+
+    body {
+      font-family: 'Georgia', serif;
+      background: var(--bg);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      color: var(--text);
+      transition: background 0.4s;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px 25px;
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    }
+    body.dark .container { background: #34495e; }
+
+    .header {
+      margin-bottom: 30px;
+    }
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      gap: 15px;
+    }
+    .book-icon {
+      font-size: 2.2rem;
+      flex-shrink: 0;
+    }
+    h1 { 
+      margin: 0;
+      color: #2c3e50; 
+      font-size: 1.95rem;
+      text-align: center;
+      flex: 1;
+      white-space: nowrap;
+    }
+    body.dark h1 { color: #ecf0f1; }
+
+    .theme-toggle {
+      font-size: 1.9rem;
+      background: none;
+      padding: 8px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .daily-date {
+      text-align: center;
+      font-size: 1.05rem;
+      color: #7f8c8d;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    body.dark .daily-date { color: #95a5a6; }
+
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+      max-width: 450px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    @media (max-width: 600px) {
+      .search-bar { flex-direction: column; max-width: 100%; }
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 15px 18px;
+      font-size: 1.1rem;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      outline: none;
+      text-align: center;
+    }
+    body.dark .search-bar input {
+      background: #2c3e50;
+      color: #ecf0f1;
+      border-color: #455a6f;
+    }
+
+    .verse-stack { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 25px; 
+      margin-bottom: 30px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 25px;
+      align-items: center;
+    }
+
+    .versions-toggle {
+      display: none;
+      margin: 15px auto;
+      padding: 12px 28px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      .versions { display: none !important; flex-direction: column; align-items: center; }
+      .versions.show { display: flex !important; }
+      .versions-toggle { display: block; }
+    }
+
+    .versions { 
+      display: flex; 
+      flex-wrap: wrap; 
+      gap: 10px; 
+      margin-bottom: 30px; 
+      justify-content: center; 
+    }
+
+    .version-label {
+      display: flex; align-items: center; gap: 6px;
+      background: #f8f9fa; padding: 8px 14px; border-radius: 30px;
+      border: 2px solid #ddd; cursor: pointer; font-size: 0.95rem;
+    }
+    body.dark .version-label {
+      background: #2c3e50; border-color: #455a6f; color: #ecf0f1;
+    }
+
+    .verse-card {
+      background: var(--card);
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      font-size: 0.95rem;
+      background: #27ae60;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .verse-text {
+      font-size: 1.4rem;
+      line-height: 1.8;
+      font-style: italic;
+      color: var(--verse);
+      margin: 20px 0;
+      text-align: left;
+    }
+    .reference { 
+      font-weight: bold; 
+      color: #7f8c8d; 
+      text-align: right; 
+      font-size: 1.15rem; 
+    }
+
+    .error-msg { color: #e74c3c; font-style: italic; font-size: 1.1rem; }
+
+    button {
+      padding: 14px 28px;
+      font-size: 1.08rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.08); }
+
+    .loading { text-align: center; font-style: italic; color: #e67e22; padding: 15px; }
+    .note { text-align: center; font-size: 0.85rem; color: #e67e22; margin-top: 40px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title-row">
+        <span class="book-icon">📖</span>
+        <h1>The Bible Keeper</h1>
+        <button class="theme-toggle" id="theme-toggle" title="Toggle Dark Mode">🌙</button>
+      </div>
+      <div id="daily-date" class="daily-date"></div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="e.g. John 3:16 or Gen 1:1">
+      <button onclick="searchByReference()">Go</button>
+    </div>
+
+    <div id="verse-stack" class="verse-stack"></div>
+
+    <div class="action-buttons">
+      <button onclick="getDailyVerse()" style="background:#27ae60;">Today's Daily Verse</button>
+      <button onclick="getNewRandomVerse()">Get Random Verse</button>
+    </div>
+
+    <button class="versions-toggle" id="versions-toggle" onclick="toggleVersions()">▼ Select Versions</button>
+    <div class="versions" id="version-selector"></div>
+
+    <div id="status" class="loading"></div>
+
+    <p class="note">
+      Powered by <a href="https://bible-api.com/" target="_blank" style="color:#e67e22;">bible-api.com</a><br>
+      Public domain translations • NIV not available (copyright)<br>
+      <a href="BibleProject_V1.Vista.html" title="Open Vista version" aria-label="Open Vista version" style="display:inline-block;width:18px;height:18px;vertical-align:middle;">
+        <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden="true" focusable="false" style="display:block;">
+          <path d="M1.5 3.1 8 2.2v6.1H1.5z" fill="#f25022"/>
+          <path d="M9 2.1l7.5-1v7.2H9z" fill="#7fba00"/>
+          <path d="M1.5 9.2H8v6.2l-6.5-.9z" fill="#00a4ef"/>
+          <path d="M9 9.2h7.5v7.2l-7.5-1z" fill="#ffb900"/>
+        </svg>
+      </a>
+    </p>
+  </div>
+
+  <script>
+    /* Full script (same as last version) - everything works as expected */
+    const AVAILABLE_VERSIONS = [
+      { id: "kjv",   name: "King James Version (KJV)" },
+      { id: "web",   name: "World English Bible (WEB) — Modern" },
+      { id: "asv",   name: "American Standard Version (ASV)" },
+      { id: "ylt",   name: "Young's Literal Translation (YLT)" },
+      { id: "darby", name: "Darby Translation" },
+      { id: "bbe",   name: "Bible in Basic English (BBE)" },
+      { id: "webbe", name: "World English Bible (British)" },
+      { id: "oeb-us",name: "Open English Bible (US)" }
+    ];
+
+    let selectedVersions = ["kjv"];
+    let currentReference = null;
+    let debounceTimer = null;
+    let versionsVisible = false;
+
+    function createVerseCard(data, reference) {
+      const card = document.createElement("div");
+      card.className = "verse-card";
+      if (data.error) {
+        card.innerHTML = `<h3>${data.translation_id?.toUpperCase() || "Unknown"}</h3><p class="error-msg">⚠️ This version doesn't have this verse.</p><p class="reference">${reference}</p>`;
+      } else {
+        card.innerHTML = `<button class="copy-btn" onclick="copyVerse(this)">Copy</button><h3>${data.translation_name || data.translation_id?.toUpperCase()}</h3><p class="verse-text">"${data.text.trim()}"</p><p class="reference">${data.reference}</p>`;
+      }
+      return card;
+    }
+
+    function copyVerse(btn) {
+      const card = btn.parentElement;
+      const text = card.querySelector('.verse-text').textContent;
+      const ref = card.querySelector('.reference').textContent;
+      navigator.clipboard.writeText(`${text}\n\n${ref}`).then(() => {
+        const original = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(() => btn.textContent = original, 2000);
+      });
+    }
+
+    async function fetchVerse(reference, translationId) {
+      try {
+        const res = await fetch(`https://bible-api.com/${encodeURIComponent(reference)}?translation=${translationId}`);
+        if (!res.ok) throw new Error("Failed");
+        return await res.json();
+      } catch (err) {
+        return { error: true, translation_id: translationId };
+      }
+    }
+
+    function getTodayKey() { const now = new Date(); return `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`; }
+    function formatTodayDate() {
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date().toLocaleDateString('en-US', options);
+    }
+
+    async function getDailyVerse() {
+      const todayKey = getTodayKey();
+      const saved = localStorage.getItem('dailyVerse');
+      if (saved && saved.startsWith(todayKey)) {
+        currentReference = saved.split('|')[1];
+      } else {
+        const res = await fetch(`https://bible-api.com/data/kjv/random`);
+        const data = await res.json();
+        const v = data.random_verse;
+        currentReference = `${v.book} ${v.chapter}:${v.verse}`;
+        localStorage.setItem('dailyVerse', `${todayKey}|${currentReference}`);
+      }
+      document.getElementById("daily-date").textContent = `📅 ${formatTodayDate()}`;
+      await refreshCurrentVerse();
+    }
+
+    function renderVersionSelector() {
+      const container = document.getElementById("version-selector");
+      container.innerHTML = AVAILABLE_VERSIONS.map(v => `<label class="version-label"><input type="checkbox" value="${v.id}" ${selectedVersions.includes(v.id) ? "checked" : ""}>${v.name}</label>`).join("");
+      container.querySelectorAll("input").forEach(cb => cb.addEventListener("change", handleVersionChange));
+    }
+
+    function handleVersionChange() {
+      const checkboxes = document.querySelectorAll("#version-selector input");
+      selectedVersions = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+      if (selectedVersions.length === 0) selectedVersions = ["kjv"];
+      clearTimeout(debounceTimer);
+      document.getElementById("status").textContent = "Applying changes...";
+      debounceTimer = setTimeout(refreshCurrentVerse, 800);
+    }
+
+    function toggleVersions() {
+      versionsVisible = !versionsVisible;
+      const versionsDiv = document.getElementById("version-selector");
+      const toggleBtn = document.getElementById("versions-toggle");
+      versionsDiv.classList.toggle("show", versionsVisible);
+      toggleBtn.textContent = versionsVisible ? "▲ Hide Versions" : "▼ Select Versions";
+    }
+
+    async function refreshCurrentVerse() {
+      if (!currentReference) return;
+      const status = document.getElementById("status");
+      const stack = document.getElementById("verse-stack");
+      status.textContent = "Loading verses...";
+      stack.innerHTML = "";
+      const results = await Promise.all(selectedVersions.map(id => fetchVerse(currentReference, id)));
+      results.forEach(data => stack.appendChild(createVerseCard(data, currentReference)));
+      document.getElementById("search-input").value = currentReference.replace(/\+/g, " ");
+      setTimeout(() => status.textContent = "", 4000);
+    }
+
+    function searchByReference() {
+      let input = document.getElementById("search-input").value.trim();
+      if (!input) return;
+      currentReference = input.replace(/\s+/g, "+");
+      refreshCurrentVerse();
+    }
+
+    async function getNewRandomVerse() {
+      const status = document.getElementById("status");
+      const stack = document.getElementById("verse-stack");
+      status.textContent = "Loading random verse...";
+      stack.innerHTML = "";
+      try {
+        const sourceVersion = selectedVersions[0];
+        const res = await fetch(`https://bible-api.com/data/${sourceVersion}/random`);
+        const data = await res.json();
+        const v = data.random_verse;
+        currentReference = `${v.book} ${v.chapter}:${v.verse}`;
+        await refreshCurrentVerse();
+      } catch (err) {
+        stack.innerHTML = `<p style="text-align:center;color:#e74c3c;">Couldn't load a random verse.<br>Please try again.</p>`;
+      }
+      status.textContent = "";
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      document.getElementById('theme-toggle').textContent = isDark ? '☀️' : '🌙';
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    window.onload = () => {
+      renderVersionSelector();
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+        document.getElementById('theme-toggle').textContent = '☀️';
+      }
+      document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+
+      const searchInput = document.getElementById("search-input");
+      searchInput.addEventListener("keypress", (e) => { if (e.key === "Enter") searchByReference(); });
+
+      if (window.innerWidth <= 600) {
+        document.getElementById("versions-toggle").style.display = "block";
+        document.getElementById("version-selector").style.display = "none";
+      }
+
+      getDailyVerse();
+    };
+  </script>
+</body>
+</html>
